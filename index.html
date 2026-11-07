@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Manrope:wght@500;700&display=swap" rel="stylesheet">
+<title>Дуэль картинок</title>
+<style>
+:root{
+  --bg:#1a1033; --bg2:#2a1856; --ink:#fff4ea; --dim:#b9a9e0;
+  --pink:#ff4d8d; --blue:#3db5ff; --gold:#ffd23f;
+  --display:'Unbounded','Arial Black',Impact,sans-serif;
+  --body:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{font-family:var(--body);color:var(--ink);
+  background:radial-gradient(120% 70% at 50% 0%,var(--bg2),var(--bg) 70%) fixed;
+  overflow:hidden;padding-top:env(safe-area-inset-top)}
+.view{display:none;position:fixed;inset:0;
+  padding:calc(env(safe-area-inset-top) + 56px) 14px calc(76px + env(safe-area-inset-bottom));
+  overflow-y:auto}
+.view.on{display:flex;flex-direction:column}
+h1,h2{font-family:var(--display);margin:0}
+.top{position:fixed;top:calc(env(safe-area-inset-top) + 0px);left:0;right:0;height:52px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-weight:900;font-size:15px;letter-spacing:.04em;z-index:3;pointer-events:none}
+.top i{font-style:normal;color:var(--gold);margin:0 8px}
+
+/* дуэль */
+.arena{flex:1;display:flex;flex-direction:column;gap:14px;position:relative;min-height:0}
+.tile{flex:1;min-height:0;position:relative;border-radius:22px;overflow:hidden;border:3px solid var(--c);
+  box-shadow:0 0 0 0 var(--c);transition:transform .25s,opacity .25s,box-shadow .25s;cursor:pointer;isolation:isolate}
+.tile.a{--c:var(--pink)} .tile.b{--c:var(--blue)}
+.tile::before{content:"";position:absolute;inset:-24px;background:var(--u) center/cover;filter:blur(22px) brightness(.55);z-index:-1}
+.tile img{width:100%;height:100%;object-fit:contain;display:block;opacity:0;transition:opacity .3s}
+.tile img.ok{opacity:1}
+.tile:active{transform:scale(.985)}
+.tile.win{transform:scale(1.02);box-shadow:0 0 38px 6px var(--c);z-index:2}
+.tile.lose{opacity:.25;transform:scale(.94)}
+.vs{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-8deg);z-index:5;pointer-events:none;
+  font-family:var(--display);font-weight:900;font-size:26px;color:#1a1033;background:var(--gold);
+  padding:10px 16px;border-radius:14px;box-shadow:0 6px 0 #b8901a,0 10px 24px #0008}
+.hint{text-align:center;color:var(--dim);font-size:13px;margin:10px 0 0;font-weight:500}
+.empty{margin:auto;text-align:center;max-width:280px}
+.empty h2{font-size:18px;margin-bottom:10px}
+.empty p{color:var(--dim);line-height:1.5;margin:0}
+
+/* кнопки */
+.btn{font-family:var(--body);font-weight:700;font-size:16px;color:#1a1033;background:var(--gold);border:0;
+  padding:14px 22px;border-radius:14px;box-shadow:0 4px 0 #b8901a;cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #b8901a}
+.btn.ok{background:#5be3a0;box-shadow:0 4px 0 #2c9c67}
+.btn.no{background:var(--pink);box-shadow:0 4px 0 #b02a5c;color:#fff}
+
+/* загрузка */
+.drop{border:2.5px dashed var(--dim);border-radius:22px;padding:34px 18px;text-align:center;cursor:pointer;background:#ffffff08}
+.drop b{display:block;font-family:var(--display);font-size:17px;margin:10px 0 6px}
+.drop span{color:var(--dim);font-size:14px;line-height:1.45}
+.drop .ic{font-size:44px}
+.msg{text-align:center;min-height:22px;margin:14px 0;font-weight:700}
+.sub{font-family:var(--display);font-size:15px;margin:22px 0 12px}
+.pend{display:flex;gap:12px;align-items:center;background:#ffffff0d;border-radius:18px;padding:10px;margin-bottom:10px}
+.pend img{width:96px;height:96px;object-fit:cover;border-radius:12px;flex:none}
+.pend .who{font-size:13px;color:var(--dim);margin-bottom:8px;word-break:break-all}
+.pend .acts{display:flex;gap:8px}
+.pend .btn{padding:9px 12px;font-size:14px;box-shadow:0 3px 0 #0006}
+
+/* чемпион */
+.champ{margin:auto 0;text-align:center}
+.champ h2{font-size:20px;color:var(--gold);margin-bottom:16px}
+.frame{position:relative;border-radius:24px;padding:5px;background:linear-gradient(135deg,#fff2b0,var(--gold) 45%,#c9951a);
+  box-shadow:0 0 44px #ffd23f55;display:inline-block;max-width:100%}
+.frame img{display:block;max-width:100%;max-height:52vh;border-radius:19px;background:#0006}
+.crown{position:absolute;top:-30px;left:50%;transform:translateX(-50%) rotate(-6deg);font-size:46px}
+.stat{margin-top:20px;font-size:15px;color:var(--dim)}
+.stat b{font-family:var(--display);color:var(--ink);font-size:22px;display:block;margin-bottom:2px}
+
+/* нижнее меню */
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:#120a26ee;backdrop-filter:blur(12px);z-index:10;border-top:1px solid #ffffff14}
+.tabs button{flex:1;border:0;background:none;color:var(--dim);font-family:var(--body);font-weight:700;font-size:12px;
+  padding:8px 0;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabs button span{font-size:22px;line-height:1}
+.tabs button.on{background:#ffffff14;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+
+<div class="top">КАРТИНКА<i>VS</i>КАРТИНКА</div>
+
+<section class="view on" id="duel">
+  <div class="arena" id="arena"></div>
+  <p class="hint" id="hint">Нажми на ту, что лучше</p>
+</section>
+
+<section class="view" id="up">
+  <h2 style="font-size:20px;margin-bottom:6px">Загрузка</h2>
+  <p id="upHint" style="color:var(--dim);margin:0 0 16px;line-height:1.45"></p>
+  <input type="file" id="file" accept="image/*" hidden>
+  <div class="drop" id="pick"><div class="ic">🖼️</div><b>Выбрать картинку</b><span>JPG, PNG, WEBP или GIF до 10 МБ</span></div>
+  <div class="msg" id="upMsg"></div>
+  <div id="adminBox" hidden><div class="sub">На модерации</div><div id="pendingList"></div></div>
+</section>
+
+<section class="view" id="top"><div class="champ" id="topBox"></div></section>
+
+<nav class="tabs">
+  <button data-t="duel" class="on"><span>⚔️</span>Дуэль</button>
+  <button data-t="up"><span>📤</span>Загрузка</button>
+  <button data-t="top"><span>🏆</span>Чемпион</button>
+</nav>
+
+<script>
+const tg=Telegram.WebApp; tg.ready(); tg.expand();
+try{tg.setHeaderColor("#1a1033");tg.setBackgroundColor("#1a1033");tg.setBottomBarColor?.("#120a26")}catch(e){}
+const H={"X-Init-Data":tg.initData};
+const api=(p,o={})=>fetch(p,{...o,headers:{...H,...(o.headers||{})}}).then(r=>{if(!r.ok)throw r;return r.json()});
+const json=b=>({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+let isAdmin=false, busy=false;
+
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button,.view").forEach(e=>e.classList.remove("on"));
+  b.classList.add("on");document.getElementById(b.dataset.t).classList.add("on");
+  const t=b.dataset.t; if(t==="top")loadTop(); if(t==="up")loadPending(); if(t==="duel")loadDuel();
+});
+
+/* ---- Дуэль ---- */
+function tile(id,otherId,cls){
+  return `<div class="tile ${cls}" data-w="${id}" data-l="${otherId}" style="--u:url(/img/${id})"><img src="/img/${id}" alt="" onload="this.classList.add('ok')"></div>`;
+}
+async function loadDuel(){
+  const arena=document.getElementById("arena"), hint=document.getElementById("hint");
+  busy=false;
+  const {pair}=await api("/api/duel");
+  if(!pair){
+    hint.hidden=true;
+    arena.innerHTML=`<div class="empty"><h2>Нужно 2 картинки</h2><p>Для дуэли в игре должно быть минимум две картинки. Загрузи их во вкладке «Загрузка».</p></div>`;
+    return;
+  }
+  hint.hidden=false;
+  const [a,b]=pair;
+  arena.innerHTML=tile(a,b,"a")+tile(b,a,"b")+`<div class="vs">VS</div>`;
+  arena.querySelectorAll(".tile").forEach(t=>t.onclick=()=>pick(t));
+}
+async function pick(t){
+  if(busy)return; busy=true;
+  tg.HapticFeedback?.impactOccurred("heavy");
+  document.querySelectorAll(".tile").forEach(x=>x.classList.add(x===t?"win":"lose"));
+  try{await api("/api/vote",json({winner:+t.dataset.w,loser:+t.dataset.l}))}catch(e){}
+  setTimeout(loadDuel,550);
+}
+
+/* ---- Загрузка ---- */
+const file=document.getElementById("file");
+document.getElementById("pick").onclick=()=>file.click();
+file.onchange=async()=>{
+  const f=file.files[0]; if(!f)return;
+  const fd=new FormData(); fd.append("file",f);
+  const msg=document.getElementById("upMsg"); msg.style.color="var(--dim)"; msg.textContent="Загружаю…";
+  try{
+    const r=await api("/api/upload",{method:"POST",body:fd});
+    msg.style.color="#5be3a0";
+    msg.textContent=r.approved?"Добавлено в игру":"Отправлено автору на проверку";
+    tg.HapticFeedback?.notificationOccurred("success");
+    loadPending();
+  }catch(e){msg.style.color="var(--pink)";msg.textContent="Не получилось. Нужен JPG, PNG, WEBP или GIF до 10 МБ."}
+  file.value="";
+};
+async function loadPending(){
+  if(!isAdmin)return;
+  const list=await api("/api/pending");
+  const box=document.getElementById("pendingList");
+  box.innerHTML=list.length?"":'<p style="color:var(--dim)">Новых картинок нет</p>';
+  list.forEach(p=>{
+    const d=document.createElement("div");d.className="pend";
+    d.innerHTML=`<img src="/img/${p.id}" alt=""><div><div class="who">от @${p.uploader_name||"?"}</div>
+      <div class="acts"><button class="btn ok" data-a="approve">Принять</button><button class="btn no" data-a="reject">Отклонить</button></div></div>`;
+    d.querySelectorAll("button").forEach(b=>b.onclick=async()=>{
+      await api("/api/moderate",json({id:p.id,action:b.dataset.a}));loadPending();});
+    box.appendChild(d);
+  });
+}
+
+/* ---- Чемпион ---- */
+async function loadTop(){
+  const c=await api("/api/champion");
+  document.getElementById("topBox").innerHTML=c
+   ?`<h2>Чемпион за всё время</h2><div class="frame"><div class="crown">👑</div><img src="/img/${c.id}" alt=""></div>
+     <div class="stat"><b>${c.wins}</b>побед в ${c.shows} дуэлях</div>`
+   :`<div class="empty"><h2>Чемпиона пока нет</h2><p>Сыграй хотя бы одну дуэль, и первая победившая картинка займёт трон.</p></div>`;
+}
+
+(async()=>{
+  const m=await api("/api/me"); isAdmin=m.admin;
+  document.getElementById("upHint").textContent=isAdmin
+   ?"Твои картинки сразу попадают в игру."
+   :"Предложи картинку. Она попадёт в игру после проверки автором.";
+  document.getElementById("adminBox").hidden=!isAdmin;
+  loadDuel();
+})();
+</script></body></html>
