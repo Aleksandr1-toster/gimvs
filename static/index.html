@@ -5,7 +5,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Manrope:wght@500;700&display=swap" rel="stylesheet">
-<title>Дуэль картинок</title>
+<title>Дуэль фото девушек</title>
 <style>
 :root{
   --bg:#1a1033; --bg2:#2a1856; --ink:#fff4ea; --dim:#b9a9e0;
@@ -86,7 +86,7 @@ h1,h2{font-family:var(--display);margin:0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 
-<div class="top">КАРТИНКА<i>VS</i>КАРТИНКА</div>
+<div class="top">ДЕВУШКА<i>VS</i>ДЕВУШКА</div>
 
 <section class="view on" id="duel">
   <div class="arena" id="arena"></div>
@@ -97,7 +97,7 @@ h1,h2{font-family:var(--display);margin:0}
   <h2 style="font-size:20px;margin-bottom:6px">Загрузка</h2>
   <p id="upHint" style="color:var(--dim);margin:0 0 16px;line-height:1.45"></p>
   <input type="file" id="file" accept="image/*" hidden>
-  <div class="drop" id="pick"><div class="ic">🖼️</div><b>Выбрать картинку</b><span>JPG, PNG, WEBP или GIF до 10 МБ</span></div>
+  <div class="drop" id="pick"><div class="ic">🖼️</div><b>Выбрать фото</b><span>JPG, PNG, WEBP или GIF до 10 МБ</span></div>
   <div class="msg" id="upMsg"></div>
   <div id="adminBox" hidden><div class="sub">На модерации</div><div id="pendingList"></div></div>
 </section>
@@ -134,7 +134,7 @@ async function loadDuel(){
   const {pair}=await api("/api/duel");
   if(!pair){
     hint.hidden=true;
-    arena.innerHTML=`<div class="empty"><h2>Нужно 2 картинки</h2><p>Для дуэли в игре должно быть минимум две картинки. Загрузи их во вкладке «Загрузка».</p></div>`;
+    arena.innerHTML=`<div class="empty"><h2>Нужно 2 фото</h2><p>Для дуэли в игре должно быть минимум два фото. Загрузи их во вкладке «Загрузка».</p></div>`;
     return;
   }
   hint.hidden=false;
@@ -170,7 +170,7 @@ async function loadPending(){
   if(!isAdmin)return;
   const list=await api("/api/pending");
   const box=document.getElementById("pendingList");
-  box.innerHTML=list.length?"":'<p style="color:var(--dim)">Новых картинок нет</p>';
+  box.innerHTML=list.length?"":'<p style="color:var(--dim)">Новых фото нет</p>';
   list.forEach(p=>{
     const d=document.createElement("div");d.className="pend";
     d.innerHTML=`<img src="/img/${p.id}" alt=""><div><div class="who">от @${p.uploader_name||"?"}</div>
@@ -187,14 +187,14 @@ async function loadTop(){
   document.getElementById("topBox").innerHTML=c
    ?`<h2>Чемпион за всё время</h2><div class="frame"><div class="crown">👑</div><img src="/img/${c.id}" alt=""></div>
      <div class="stat"><b>${c.wins}</b>побед в ${c.shows} дуэлях</div>`
-   :`<div class="empty"><h2>Чемпиона пока нет</h2><p>Сыграй хотя бы одну дуэль, и первая победившая картинка займёт трон.</p></div>`;
+   :`<div class="empty"><h2>Чемпиона пока нет</h2><p>Сыграй хотя бы одну дуэль, и первое победившее фото займёт трон.</p></div>`;
 }
 
 (async()=>{
   const m=await api("/api/me"); isAdmin=m.admin;
   document.getElementById("upHint").textContent=isAdmin
-   ?"Твои картинки сразу попадают в игру."
-   :"Предложи картинку. Она попадёт в игру после проверки автором.";
+   ?"Твои фото сразу попадают в игру."
+   :"Предложи фото. Оно попадёт в игру после проверки автором.";
   document.getElementById("adminBox").hidden=!isAdmin;
   loadDuel();
 })();
